@@ -1,0 +1,37 @@
+# Backend
+backend/node_modules
+backend/__pycache__
+backend/.pytest_cache
+backend/logs
+backend/media
+backend/.env
+backend/venv
+backend/.venv
+
+# Frontend
+frontend/node_modules
+frontend/dist
+frontend/build
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# General
+.git
+.gitignore
+.DS_Store
+*.log
+*.md
+docker-compose.override.yml
+README.md
+.vscode
+.idea
+*.pyc
+__pycache__
+.pytest_cache
+coverage.xml
+*.coverage
+.nyc_output
+logs/

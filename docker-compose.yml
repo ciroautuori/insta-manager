@@ -1,0 +1,182 @@
+version: '3.8'
+
+services:
+  # Database PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: instadmin-postgres
+    environment:
+      POSTGRES_DB: instadmin
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - instadmin-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis per cache e Celery broker
+  redis:
+    image: redis:7-alpine
+    container_name: instadmin-redis
+    command: redis-server --requirepass redis_password
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - instadmin-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend FastAPI
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: instadmin-backend
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres_password@postgres:5432/instadmin
+      - REDIS_URL=redis://:redis_password@redis:6379/0
+      - CELERY_BROKER_URL=redis://:redis_password@redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://:redis_password@redis:6379/2
+      - SECRET_KEY=super_secret_jwt_key_change_in_production
+      - ADMIN_EMAIL=admin@instladmin.com
+      - ADMIN_PASSWORD=admin123
+      - META_APP_ID=your_meta_app_id
+      - META_APP_SECRET=your_meta_app_secret
+      - META_REDIRECT_URI=https://yourdomain.com/auth/instagram/callback
+      - MEDIA_UPLOAD_PATH=/app/media
+      - FRONTEND_URL=http://localhost:3000
+    volumes:
+      - media_storage:/app/media
+      - ./backend/logs:/app/logs
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - instadmin-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Celery Worker
+  celery-worker:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: instadmin-celery-worker
+    command: celery -A app.workers.celery_app worker --loglevel=info --pool=prefork
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres_password@postgres:5432/instadmin
+      - REDIS_URL=redis://:redis_password@redis:6379/0
+      - CELERY_BROKER_URL=redis://:redis_password@redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://:redis_password@redis:6379/2
+      - SECRET_KEY=super_secret_jwt_key_change_in_production
+      - ADMIN_EMAIL=admin@instadmin.com
+      - ADMIN_PASSWORD=admin123
+      - META_APP_ID=your_meta_app_id
+      - META_APP_SECRET=your_meta_app_secret
+      - MEDIA_UPLOAD_PATH=/app/media
+    volumes:
+      - media_storage:/app/media
+      - ./backend/logs:/app/logs
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - instadmin-network
+    restart: unless-stopped
+
+  # Celery Beat (Scheduler)
+  celery-beat:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: instadmin-celery-beat
+    command: celery -A app.workers.celery_app beat --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres_password@postgres:5432/instadmin
+      - REDIS_URL=redis://:redis_password@redis:6379/0
+      - CELERY_BROKER_URL=redis://:redis_password@redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://:redis_password@redis:6379/2
+      - SECRET_KEY=super_secret_jwt_key_change_in_production
+      - ADMIN_EMAIL=admin@instadmin.com
+      - ADMIN_PASSWORD=admin123
+      - META_APP_ID=your_meta_app_id
+      - META_APP_SECRET=your_meta_app_secret
+    volumes:
+      - ./backend/logs:/app/logs
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - instadmin-network
+    restart: unless-stopped
+
+  # Frontend React App
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: instadmin-frontend
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8080
+    volumes:
+      - ./frontend/public/media:/usr/share/nginx/html/media:ro
+    ports:
+      - "3000:80"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - instadmin-network
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: instadmin-nginx
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - media_storage:/var/www/media:ro
+    ports:
+      - "8080:80"
+      - "8443:443"
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - instadmin-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  media_storage:
+    driver: local
+
+networks:
+  instadmin-network:
+    driver: bridge
