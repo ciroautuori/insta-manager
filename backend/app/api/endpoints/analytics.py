@@ -5,10 +5,14 @@ from datetime import datetime, date, timedelta
 
 from app.core.database import get_db
 from app.core.security import get_current_admin
+from app.core.logging import get_logger, log_api_request, log_api_response
+from app.core.exceptions import not_found_error, validation_error, server_error
 from app.models.analytics import Analytics
 from app.models.instagram_account import InstagramAccount
 from app.schemas.analytics import AnalyticsResponse, AnalyticsPeriod, AccountInsights
 from app.services.instagram_service import instagram_service
+
+logger = get_logger(__name__)
 
 router = APIRouter()
 
@@ -16,40 +20,48 @@ router = APIRouter()
 async def get_analytics(
     current_admin: dict = Depends(get_current_admin),
     db: Session = Depends(get_db),
-    account_id: Optional[int] = Query(None, description="Filtra per account ID"),
-    start_date: Optional[date] = Query(None, description="Data inizio"),
-    end_date: Optional[date] = Query(None, description="Data fine"),
-    limit: int = Query(50, le=100, description="Numero massimo risultati")
+    account_id: Optional[int] = Query(None, description="Filter by account ID"),
+    start_date: Optional[date] = Query(None, description="Start date"),
+    end_date: Optional[date] = Query(None, description="End date"),
+    limit: int = Query(50, le=100, description="Maximum number of results")
 ):
-    """Ottieni analytics con filtri"""
-    query = db.query(Analytics)
+    """Get analytics data with filters"""
+    logger.info("Retrieving analytics data", extra={"account_id": account_id, "limit": limit})
     
-    if account_id:
-        query = query.filter(Analytics.account_id == account_id)
-    
-    if start_date:
-        query = query.filter(Analytics.date >= start_date)
-    
-    if end_date:
-        query = query.filter(Analytics.date <= end_date)
-    
-    analytics = query.order_by(Analytics.date.desc()).limit(limit).all()
-    return analytics
+    try:
+        query = db.query(Analytics)
+        
+        if account_id:
+            query = query.filter(Analytics.account_id == account_id)
+        
+        if start_date:
+            query = query.filter(Analytics.date >= start_date)
+        
+        if end_date:
+            query = query.filter(Analytics.date <= end_date)
+        
+        analytics = query.order_by(Analytics.date.desc()).limit(limit).all()
+        
+        logger.info(f"Retrieved {len(analytics)} analytics records")
+        return analytics
+        
+    except Exception as e:
+        logger.error(f"Failed to retrieve analytics: {str(e)}", exc_info=True)
+        raise server_error("Failed to retrieve analytics data")
 
 @router.get("/account/{account_id}", response_model=List[AnalyticsResponse])
 async def get_account_analytics(
     account_id: int,
     current_admin: dict = Depends(get_current_admin),
     db: Session = Depends(get_db),
-    days: int = Query(30, description="Numero giorni da includere")
+    days: int = Query(30, description="Number of days to include")
 ):
-    """Ottieni analytics per account specifico"""
+    """Get analytics for specific account"""
+    logger.info(f"Retrieving analytics for account {account_id}")
+    
     account = db.query(InstagramAccount).filter(InstagramAccount.id == account_id).first()
     if not account:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Account Instagram non trovato"
-        )
+        raise not_found_error("Instagram account", account_id)
     
     start_date = date.today() - timedelta(days=days)
     
@@ -66,22 +78,16 @@ async def sync_account_analytics(
     current_admin: dict = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
-    """Sincronizza analytics da Instagram"""
+    """Synchronize analytics from Instagram"""
     account = db.query(InstagramAccount).filter(InstagramAccount.id == account_id).first()
     if not account:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Account Instagram non trovato"
-        )
+        raise not_found_error("Instagram account", account_id)
     
     if not account.is_business_account:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Analytics disponibili solo per account business"
-        )
+        raise validation_error("Analytics are only available for business accounts")
     
     try:
-        # Ottieni insights da Instagram (ultimi 7 giorni)
+        # Get insights from Instagram (last 7 days)
         end_date = datetime.utcnow()
         start_date = end_date - timedelta(days=7)
         
@@ -127,45 +133,40 @@ async def sync_account_analytics(
                 elif metric_name == 'website_clicks':
                     analytics_record.website_clicks = metric_value
             
-            # Aggiorna contatori follower
+            # Update follower counters
             analytics_record.followers_count = account.followers_count
             analytics_record.following_count = account.following_count
             analytics_record.posts_count = account.posts_count
         
         db.commit()
         
-        return {"message": "Analytics sincronizzati con successo"}
+        return {"message": "Analytics synchronized successfully"}
         
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Errore sincronizzazione analytics: {str(e)}"
-        )
+        logger.error(f"Analytics synchronization failed: {str(e)}", exc_info=True)
+        raise server_error(f"Analytics synchronization failed: {str(e)}")
 
 @router.get("/insights/{account_id}", response_model=AccountInsights)
 async def get_account_insights(
     account_id: int,
     current_admin: dict = Depends(get_current_admin),
     db: Session = Depends(get_db),
-    days: int = Query(30, description="Periodo in giorni")
+    days: int = Query(30, description="Period in days")
 ):
-    """Ottieni insights avanzati per account"""
+    """Get advanced insights for account"""
     account = db.query(InstagramAccount).filter(InstagramAccount.id == account_id).first()
     if not account:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Account Instagram non trovato"
-        )
+        raise not_found_error("Instagram account", account_id)
     
     start_date = date.today() - timedelta(days=days)
     
-    # Ottieni analytics per periodo
+    # Get analytics for period
     analytics = db.query(Analytics).filter(
         Analytics.account_id == account_id,
         Analytics.date >= start_date
     ).order_by(Analytics.date).all()
     
-    # Calcola crescita follower
+    # Calculate follower growth
     followers_growth = []
     for record in analytics:
         followers_growth.append({
@@ -173,7 +174,7 @@ async def get_account_insights(
             "count": record.followers_count
         })
     
-    # Analizza performance per tipo di post
+    # Analyze engagement by post type
     posts = account.posts
     engagement_by_type = {}
     
@@ -187,7 +188,7 @@ async def get_account_insights(
         engagement_by_type[post_type]["total_reach"] += (post.reach or 0)
         engagement_by_type[post_type]["count"] += 1
     
-    # Calcola rate per tipo
+    # Calculate aggregate metrics
     engagement_rates = {}
     for post_type, data in engagement_by_type.items():
         if data["total_reach"] > 0 and data["count"] > 0:
@@ -196,7 +197,7 @@ async def get_account_insights(
         else:
             engagement_rates[post_type] = 0.0
     
-    # Migliori orari posting (simulato - richiederebbe analisi storica)
+    # Find best posting times (simulated - would require historical analysis)
     best_posting_times = {
         "monday": 9,
         "tuesday": 10,
@@ -220,7 +221,6 @@ async def get_account_insights(
         followers_growth=followers_growth,
         engagement_by_post_type=engagement_rates,
         best_posting_times=best_posting_times,
-        hashtag_performance=hashtag_performance
     )
 
 @router.delete("/account/{account_id}")
@@ -228,27 +228,21 @@ async def delete_account_analytics(
     account_id: int,
     current_admin: dict = Depends(get_current_admin),
     db: Session = Depends(get_db),
-    confirm: bool = Query(False, description="Conferma eliminazione")
+    confirm: bool = Query(False, description="Confirm deletion")
 ):
-    """Elimina tutti gli analytics per account"""
+    """Delete all analytics for account"""
     if not confirm:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Eliminazione non confermata. Usa ?confirm=true"
-        )
+        raise validation_error("Deletion not confirmed. Use ?confirm=true")
     
     account = db.query(InstagramAccount).filter(InstagramAccount.id == account_id).first()
     if not account:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Account Instagram non trovato"
-        )
+        raise not_found_error("Instagram account", account_id)
     
-    # Elimina tutti gli analytics
+    # Delete all analytics
     deleted_count = db.query(Analytics).filter(Analytics.account_id == account_id).delete()
     db.commit()
     
-    return {"message": f"Eliminati {deleted_count} record analytics per account {account.username}"}
+    return {"message": f"Deleted {deleted_count} analytics records for account {account.username}"}
 
 @router.get("/export/{account_id}")
 async def export_analytics(
@@ -257,15 +251,12 @@ async def export_analytics(
     db: Session = Depends(get_db),
     start_date: Optional[date] = Query(None),
     end_date: Optional[date] = Query(None),
-    format: str = Query("json", description="Formato export: json, csv")
+    format: str = Query("json", description="Export format: json, csv")
 ):
-    """Esporta analytics in formato specificato"""
+    """Export analytics in specified format"""
     account = db.query(InstagramAccount).filter(InstagramAccount.id == account_id).first()
     if not account:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Account Instagram non trovato"
-        )
+        raise not_found_error("Instagram account", account_id)
     
     query = db.query(Analytics).filter(Analytics.account_id == account_id)
     

@@ -17,20 +17,20 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # JWT Bearer scheme
 security = HTTPBearer()
 
-# Rate limiter con Redis
+# Rate limiter with Redis
 redis_client = redis.from_url(settings.REDIS_URL)
 limiter = Limiter(key_func=get_remote_address, storage_uri=settings.REDIS_URL)
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verifica password contro hash"""
+    """Verify password against hash"""
     return pwd_context.verify(plain_password, hashed_password)
 
 def get_password_hash(password: str) -> str:
-    """Genera hash della password"""
+    """Generate password hash"""
     return pwd_context.hash(password)
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
-    """Crea JWT access token"""
+    """Create JWT access token"""
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
@@ -42,24 +42,24 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     return encoded_jwt
 
 def verify_token(token: str) -> dict:
-    """Verifica JWT token e restituisce payload"""
+    """Verify JWT token and return payload"""
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         email: str = payload.get("sub")
         if email is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Token non valido"
+                detail="Invalid token"
             )
         return payload
     except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token non valido"
+            detail="Invalid token"
         )
 
 async def get_current_admin(credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_database)):
-    """Dependency per verificare admin autenticato"""
+    """Dependency to verify authenticated admin"""
     from app.models.admin import Admin
     
     token = credentials.credentials
@@ -69,36 +69,36 @@ async def get_current_admin(credentials: HTTPAuthorizationCredentials = Depends(
     if not email:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token non valido"
+            detail="Invalid token"
         )
     
-    # Verifica che l'utente esista nel database come admin
+    # Verify that the user exists in the database as admin
     admin = db.query(Admin).filter(Admin.email == email).first()
     if not admin or not admin.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Accesso negato: solo admin autorizzati"
+            detail="Access denied: authorized admins only"
         )
     
     return {"email": email, "role": "admin", "id": admin.id}
 
 def check_instagram_token_validity(access_token: str) -> bool:
-    """Verifica validità token Instagram"""
-    # Implementazione per verificare token Meta Graph API
-    # Questa funzione sarà implementata nel servizio Instagram
+    """Verify Instagram token validity"""
+    # Implementation to verify Meta Graph API token
+    # This function will be implemented in the Instagram service
     return True
 
 class RateLimitManager:
-    """Gestione rate limiting personalizzata"""
+    """Custom rate limiting management"""
     
     @staticmethod
     def check_instagram_api_limit(user_id: int) -> bool:
-        """Verifica limite API Instagram per utente"""
+        """Check Instagram API limit for user"""
         key = f"instagram_api_limit:{user_id}"
         current_count = redis_client.get(key)
         
         if current_count is None:
-            redis_client.setex(key, 3600, 1)  # 1 ora
+            redis_client.setex(key, 3600, 1)  # 1 hour
             return True
         
         if int(current_count) >= settings.INSTAGRAM_API_REQUESTS_PER_HOUR:
@@ -109,7 +109,7 @@ class RateLimitManager:
     
     @staticmethod
     def increment_api_usage(user_id: int):
-        """Incrementa contatore uso API"""
+        """Increment API usage counter"""
         key = f"instagram_api_limit:{user_id}"
         if redis_client.exists(key):
             redis_client.incr(key)

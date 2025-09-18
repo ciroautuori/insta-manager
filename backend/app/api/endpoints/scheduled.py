@@ -29,14 +29,14 @@ async def create_scheduled_post(
     if not account:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Account Instagram non trovato"
+            detail="Instagram account not found"
         )
     
-    # Verifica che scheduled_for sia nel futuro
+    # Verify that scheduled_for is in the future
     if scheduled_data.scheduled_for <= datetime.utcnow():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Data pianificazione deve essere nel futuro"
+            detail="Scheduled date must be in the future"
         )
     
     # Crea scheduled post
@@ -66,7 +66,7 @@ async def create_scheduled_post(
     new_scheduled.celery_task_id = task.id
     db.commit()
     
-    return new_scheduled
+    return {"message": "Post scheduled successfully", "id": new_scheduled.id}
 
 @router.get("/", response_model=List[ScheduledPostResponse])
 async def list_scheduled_posts(
@@ -106,7 +106,7 @@ async def get_scheduled_post(
     if not scheduled:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Post programmato non trovato"
+            detail="Scheduled post not found"
         )
     
     return scheduled
@@ -124,7 +124,7 @@ async def update_scheduled_post(
     if not scheduled:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Post programmato non trovato"
+            detail="Scheduled post not found"
         )
     
     if scheduled.status not in [ScheduleStatus.PENDING, ScheduleStatus.FAILED]:
@@ -175,13 +175,13 @@ async def cancel_scheduled_post(
     if not scheduled:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Post programmato non trovato"
+            detail="Scheduled post not found"
         )
     
     if scheduled.status == ScheduleStatus.PUBLISHED:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Non puoi cancellare un post già pubblicato"
+            detail="Cannot delete a published post"
         )
     
     # Cancella task Celery
@@ -208,13 +208,13 @@ async def execute_scheduled_post_now(
     if not scheduled:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Post programmato non trovato"
+            detail="Scheduled post not found"
         )
     
     if scheduled.status != ScheduleStatus.PENDING:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Puoi eseguire solo post pending"
+            detail="Post cannot be published in current state"
         )
     
     # Cancella task programmato
