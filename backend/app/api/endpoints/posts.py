@@ -5,13 +5,37 @@ from datetime import datetime
 
 from app.core.database import get_db
 from app.core.security import get_current_admin
-from app.models.post import Post
+from app.core.config import settings
+from app.models.post import Post, PostStatus, PostType
 from app.models.instagram_account import InstagramAccount
-from app.models.media import Media
+from app.models.media import Media, MediaStatus
 from app.schemas.post import PostCreate, PostResponse, PostUpdate, PostStats, PostAnalytics
 from app.services.instagram_service import instagram_service
 
 router = APIRouter()
+
+
+def _serialize_post(post: Post) -> PostResponse:
+    """Serializza un Post SQLAlchemy nel PostResponse schema, mappando i nomi campo."""
+    return PostResponse(
+        id=post.id,
+        account_id=post.account_id,
+        caption=post.caption,
+        hashtags=None,  # non presente nel modello
+        post_type=post.post_type,
+        location_id=None,  # non presente nel modello
+        location_name=None,  # non presente nel modello
+        instagram_post_id=post.instagram_post_id,
+        status=post.status,
+        likes_count=post.like_count or 0,
+        comments_count=post.comment_count or 0,
+        shares_count=post.share_count or 0,
+        impressions=post.impressions or 0,
+        reach=post.reach or 0,
+        published_at=post.timestamp,
+        created_at=post.created_at,
+        updated_at=post.updated_at,
+    )
 
 @router.post("/", response_model=PostResponse, status_code=status.HTTP_201_CREATED)
 async def create_post(
@@ -27,21 +51,19 @@ async def create_post(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Account Instagram non trovato"
         )
-    
-    # Crea post
+
+    # Crea post (ignora campi non presenti nel modello)
     new_post = Post(
         account_id=post_data.account_id,
         caption=post_data.caption,
-        hashtags=post_data.hashtags,
         post_type=post_data.post_type,
-        location_id=post_data.location_id,
-        location_name=post_data.location_name
+        status=PostStatus.DRAFT,
     )
-    
+
     db.add(new_post)
     db.commit()
     db.refresh(new_post)
-    
+
     # Associa media se forniti
     if post_data.media_files:
         for media_id in post_data.media_files:
@@ -49,8 +71,8 @@ async def create_post(
             if media:
                 media.post_id = new_post.id
         db.commit()
-    
-    return new_post
+
+    return _serialize_post(new_post)
 
 @router.get("/", response_model=List[PostResponse])
 async def list_posts(
@@ -68,10 +90,15 @@ async def list_posts(
         query = query.filter(Post.account_id == account_id)
     
     if status_filter:
-        query = query.filter(Post.status == status_filter)
+        try:
+            status_enum = PostStatus(status_filter)
+            query = query.filter(Post.status == status_enum)
+        except ValueError:
+            # status non valido, ignora il filtro
+            pass
     
     posts = query.order_by(Post.created_at.desc()).offset(offset).limit(limit).all()
-    return posts
+    return [_serialize_post(p) for p in posts]
 
 @router.get("/{post_id}", response_model=PostResponse)
 async def get_post(
@@ -88,7 +115,7 @@ async def get_post(
             detail="Post non trovato"
         )
     
-    return post
+    return _serialize_post(post)
 
 @router.put("/{post_id}", response_model=PostResponse)
 async def update_post(
@@ -106,14 +133,31 @@ async def update_post(
             detail="Post non trovato"
         )
     
-    # Aggiorna campi se forniti
+    # Aggiorna campi consentiti
     update_data = post_update.dict(exclude_unset=True)
+    allowed_fields = {"caption", "status", "location_id", "location_name", "post_type"}
     for field, value in update_data.items():
-        setattr(post, field, value)
-    
+        if field == "status" and value is not None:
+            # assicurati che sia un Enum PostStatus
+            if isinstance(value, str):
+                try:
+                    value = PostStatus(value)
+                except ValueError:
+                    continue
+        if field == "post_type" and value is not None and isinstance(value, str):
+            try:
+                value = PostType(value)
+            except ValueError:
+                continue
+        if field in {"location_id", "location_name"}:
+            # ignorati: non esistono nel modello
+            continue
+        if field in allowed_fields and hasattr(post, field):
+            setattr(post, field, value)
+
     db.commit()
     db.refresh(post)
-    return post
+    return _serialize_post(post)
 
 @router.delete("/{post_id}")
 async def delete_post(
@@ -150,7 +194,7 @@ async def publish_post(
             detail="Post non trovato"
         )
     
-    if post.status != "draft":
+    if post.status != PostStatus.DRAFT:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Solo i post in bozza possono essere pubblicati"
@@ -160,10 +204,10 @@ async def publish_post(
         # Prepara media URLs per Instagram
         media_urls = []
         for media in post.media:
-            if media.status == "ready":
-                # Genera URL completo per il media
-                media_url = f"https://yourdomain.com/media/{media.file_path}"
-                media_urls.append(media_url)
+            if media.status == MediaStatus.READY:
+                # Genera URL completo usando filename e base URL pubblica
+                base = settings.PUBLIC_MEDIA_BASE_URL.rstrip('/')
+                media_urls.append(f"{base}/{media.filename}")
         
         if not media_urls:
             raise HTTPException(
@@ -176,13 +220,13 @@ async def publish_post(
             access_token=post.account.access_token,
             media_urls=media_urls,
             caption=post.caption,
-            location_id=post.location_id
+            location_id=None
         )
         
         # Aggiorna post
         post.instagram_post_id = instagram_post_id
-        post.status = "published"
-        post.published_at = datetime.utcnow()
+        post.status = PostStatus.PUBLISHED
+        post.timestamp = datetime.utcnow()
         
         db.commit()
         db.refresh(post)
@@ -190,7 +234,7 @@ async def publish_post(
         return {"message": "Post pubblicato con successo", "instagram_post_id": instagram_post_id}
         
     except Exception as e:
-        post.status = "failed"
+        post.status = PostStatus.ARCHIVED if "rate limit" in str(e).lower() else PostStatus.DRAFT
         db.commit()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -235,29 +279,29 @@ async def get_post_analytics(
             elif metric_name == 'reach':
                 post.reach = metric_value
             elif metric_name == 'likes':
-                post.likes_count = metric_value
+                post.like_count = metric_value
             elif metric_name == 'comments':
-                post.comments_count = metric_value
+                post.comment_count = metric_value
             elif metric_name == 'shares':
-                post.shares_count = metric_value
+                post.share_count = metric_value
         
         # Calcola engagement rate
         engagement_rate = 0.0
-        if post.reach > 0:
-            total_engagement = post.likes_count + post.comments_count + post.shares_count
+        if (post.reach or 0) > 0:
+            total_engagement = (post.like_count or 0) + (post.comment_count or 0) + (post.share_count or 0)
             engagement_rate = (total_engagement / post.reach) * 100
         
         db.commit()
         
         return PostAnalytics(
             post_id=post.id,
-            likes_count=post.likes_count,
-            comments_count=post.comments_count,
-            shares_count=post.shares_count,
-            impressions=post.impressions,
-            reach=post.reach,
+            likes_count=post.like_count or 0,
+            comments_count=post.comment_count or 0,
+            shares_count=post.share_count or 0,
+            impressions=post.impressions or 0,
+            reach=post.reach or 0,
             engagement_rate=round(engagement_rate, 2),
-            posted_at=post.published_at
+            posted_at=post.timestamp
         )
         
     except Exception as e:
@@ -281,13 +325,13 @@ async def get_posts_stats(
     posts = query.all()
     
     total_posts = len(posts)
-    published_posts = len([p for p in posts if p.status == "published"])
-    draft_posts = len([p for p in posts if p.status == "draft"])
-    failed_posts = len([p for p in posts if p.status == "failed"])
+    published_posts = len([p for p in posts if p.status == PostStatus.PUBLISHED])
+    draft_posts = len([p for p in posts if p.status == PostStatus.DRAFT])
+    failed_posts = len([p for p in posts if p.status == PostStatus.ARCHIVED])
     
-    total_likes = sum(p.likes_count for p in posts)
-    total_comments = sum(p.comments_count for p in posts)
-    total_reach = sum(p.reach for p in posts)
+    total_likes = sum((p.like_count or 0) for p in posts)
+    total_comments = sum((p.comment_count or 0) for p in posts)
+    total_reach = sum((p.reach or 0) for p in posts)
     
     engagement_rate = 0.0
     if total_reach > 0:

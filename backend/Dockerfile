@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     postgresql-client \
     redis-tools \
     curl \
+    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 # Copia requirements e installa dipendenze Python

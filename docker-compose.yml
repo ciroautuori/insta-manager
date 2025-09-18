@@ -1,4 +1,4 @@
-version: '3.8'
+# version: '3.8'  # Obsolete in Docker Compose v2+
 
 services:
   # Database PostgreSQL
@@ -50,12 +50,13 @@ services:
       - CELERY_BROKER_URL=redis://:redis_password@redis:6379/1
       - CELERY_RESULT_BACKEND=redis://:redis_password@redis:6379/2
       - SECRET_KEY=super_secret_jwt_key_change_in_production
-      - ADMIN_EMAIL=admin@instladmin.com
+      - ADMIN_EMAIL=admin@instadmin.com
       - ADMIN_PASSWORD=admin123
       - META_APP_ID=your_meta_app_id
       - META_APP_SECRET=your_meta_app_secret
-      - META_REDIRECT_URI=https://yourdomain.com/auth/instagram/callback
+      - META_REDIRECT_URI=http://localhost:8080/api/v1/instagram/auth/callback
       - MEDIA_UPLOAD_PATH=/app/media
+      - PUBLIC_MEDIA_BASE_URL=http://localhost:8080/media
       - FRONTEND_URL=http://localhost:3000
     volumes:
       - media_storage:/app/media
@@ -94,6 +95,7 @@ services:
       - META_APP_ID=your_meta_app_id
       - META_APP_SECRET=your_meta_app_secret
       - MEDIA_UPLOAD_PATH=/app/media
+      - PUBLIC_MEDIA_BASE_URL=http://localhost:8080/media
     volumes:
       - media_storage:/app/media
       - ./backend/logs:/app/logs

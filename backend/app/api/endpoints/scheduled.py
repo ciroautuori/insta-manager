@@ -84,7 +84,12 @@ async def list_scheduled_posts(
         query = query.filter(ScheduledPost.account_id == account_id)
     
     if status_filter:
-        query = query.filter(ScheduledPost.status == status_filter)
+        try:
+            status_enum = ScheduleStatus(status_filter)
+            query = query.filter(ScheduledPost.status == status_enum)
+        except ValueError:
+            # stato non valido: ignora filtro
+            pass
     
     scheduled_posts = query.order_by(ScheduledPost.scheduled_for.asc()).offset(offset).limit(limit).all()
     return scheduled_posts
@@ -216,15 +221,16 @@ async def execute_scheduled_post_now(
     if scheduled.celery_task_id:
         from app.workers.publisher import cancel_scheduled_task
         cancel_scheduled_task(scheduled.celery_task_id)
-    
-    # Esegui ora in background
+
+    # Esegui ora tramite Celery
     from app.workers.publisher import publish_scheduled_post
-    background_tasks.add_task(publish_scheduled_post, scheduled.id)
+    task = publish_scheduled_post.apply_async(args=[scheduled.id])
+    scheduled.celery_task_id = task.id
     
     scheduled.status = ScheduleStatus.PROCESSING
     db.commit()
     
-    return {"message": "Post in corso di pubblicazione"}
+    return {"message": "Post in corso di pubblicazione", "task_id": task.id}
 
 @router.get("/stats/overview", response_model=ScheduledPostStats)
 async def get_scheduled_stats(

@@ -1,3 +1,10 @@
+# =============================================================================
+# Instagram Multi-Account Management Platform - Git Ignore Configuration
+# =============================================================================
+
+# =============================================================================
+# PYTHON
+# =============================================================================
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -13,6 +20,7 @@ dist/
 downloads/
 eggs/
 .eggs/
+lib/
 lib64/
 parts/
 sdist/
@@ -25,13 +33,8 @@ share/python-wheels/
 MANIFEST
 
 # PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
 *.spec
-
-# Installer logs
-*.log
 
 # Unit test / coverage reports
 htmlcov/
@@ -42,29 +45,14 @@ htmlcov/
 .cache
 .pytest_cache/
 .hypothesis/
+coverage.xml
+*.cover
+*.py,cover
+.coverage.*
 
 # Translations
 *.mo
 *.pot
-
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
-
-# Flask stuff:
-instance/
-.webassets-cache
-
-# Scrapy stuff:
-.scrapy
-
-# Sphinx documentation
-docs/_build/
-
-# PyBuilder
-target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -76,14 +64,15 @@ ipython_config.py
 # pyenv
 .python-version
 
-# celery
+# Celery
 celerybeat-schedule
 celerybeat.pid
 
 # SageMath parsed files
 *.sage.py
 
-# Environments
+# Virtual environments
+.env
 .venv
 env/
 venv/
@@ -91,26 +80,237 @@ ENV/
 env.bak/
 venv.bak/
 
-# IDE-specific
-.idea/
+# =============================================================================
+# NODE.JS / FRONTEND
+# =============================================================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# Dependency directories
+jspm_packages/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional stylelint cache
+.stylelintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+out
+
+# Nuxt.js build / generate output
+.nuxt
+dist
+
+# Gatsby files
+.cache/
+public
+
+# Vite build output
+dist/
+dist-ssr/
+
+# Rollup.js default build output
+dist/
+
+# Storybook build outputs
+.out
+.storybook-out
+storybook-static
+
+# =============================================================================
+# DOCKER & CONTAINERS
+# =============================================================================
+# Docker volumes and data
+docker-compose.override.yml
+.dockerignore
+
+# =============================================================================
+# DATABASES
+# =============================================================================
+# SQLite
+*.db
+*.sqlite
+*.sqlite3
+db.sqlite3
+db.sqlite3-journal
+
+# PostgreSQL
+*.sql
+*.dump
+
+# =============================================================================
+# LOGS & MONITORING
+# =============================================================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# =============================================================================
+# MEDIA & UPLOADS
+# =============================================================================
+# User-uploaded files
+media/
+uploads/
+static/uploads/
+backend/media/
+frontend/public/uploads/
+
+# =============================================================================
+# ENVIRONMENT & SECRETS
+# =============================================================================
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.prod
+.env.staging
+
+# SSL certificates
+*.pem
+*.key
+*.crt
+*.csr
+ssl/
+
+# =============================================================================
+# IDE & EDITORS
+# =============================================================================
+# VSCode
 .vscode/
+*.code-workspace
+
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Vim
 *.swp
 *.swo
 *~
 
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
 
-# Node.js
-node_modules/
-npm-debug.log
-yarn-debug.log
-yarn-error.log
-.pnp/
-.pnp.js
+# Sublime Text
+*.tmlanguage.cache
+*.tmPreferences.cache
+*.stTheme.cache
+*.sublime-workspace
+*.sublime-project
 
-# Frontend build artifacts
-/apps/frontend/dist
-/apps/frontend/.next
-/apps/frontend/out
+# =============================================================================
+# OPERATING SYSTEM
+# =============================================================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
 
-# User-uploaded files
-/apps/backend/app/static/uploads/
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# =============================================================================
+# BACKUP & TEMPORARY FILES
+# =============================================================================
+# Backup files
+*.bak
+*.backup
+*.tmp
+*.temp
+backup_*.sql
+*.sql.gz
+
+# Temporary files
+tmp/
+temp/

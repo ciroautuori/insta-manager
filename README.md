@@ -1,317 +1,383 @@
-# Instagram Multi-Account Dashboard
+# Instagram Multi-Account Management Platform
 
-Dashboard privato per la gestione centralizzata di più account Instagram con funzionalità di programmazione post, analytics e automazione.
+[![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)](https://fastapi.tiangolo.com)
+[![React](https://img.shields.io/badge/React-18+-blue.svg)](https://reactjs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5+-blue.svg)](https://typescriptlang.org)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://docker.com)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-## 🚀 Caratteristiche
+A comprehensive, enterprise-grade platform for centralized Instagram account management with advanced post scheduling, analytics, and automation capabilities. Built with modern technologies and designed for scalability, security, and performance.
 
-- **Gestione Multi-Account**: Connetti e gestisci più account Instagram
-- **Programmazione Post**: Scheduling automatico per Feed, Stories e Reels
-- **Upload Media**: Sistema sicuro per caricare e organizzare contenuti multimediali
-- **Analytics**: Metriche dettagliate e insights per ogni account
-- **Automazione**: Worker Celery per task programmati e sincronizzazione
-- **Dashboard Admin**: Interfaccia sicura solo per amministratori
-- **API Instagram**: Integrazione completa con Meta Graph API
+## ✨ Key Features
 
-## 🛠️ Stack Tecnologico
+- **🔗 Multi-Account Management**: Connect and manage unlimited Instagram accounts
+- **📅 Advanced Scheduling**: Automated posting for Feed, Stories, and Reels with timezone support
+- **📁 Media Management**: Secure upload system with automatic optimization and organization
+- **📊 Analytics & Insights**: Comprehensive metrics, engagement tracking, and performance analytics
+- **⚡ Automation Engine**: Celery-powered background workers for scheduled tasks and synchronization
+- **🔐 Admin Dashboard**: Secure, role-based administrative interface
+- **🔌 Instagram API Integration**: Full Meta Graph API integration with OAuth2 authentication
+- **🎯 Content Optimization**: AI-powered hashtag suggestions and optimal posting times
+- **📈 Performance Tracking**: Real-time engagement metrics and ROI analysis
 
-### Backend
-- **FastAPI** - API REST moderna e veloce
-- **PostgreSQL** - Database relazionale robusto
-- **SQLAlchemy** - ORM Python avanzato
-- **Alembic** - Gestione migrazioni database
-- **Celery + Redis** - Task queue per automazione
-- **OAuth2 + JWT** - Autenticazione sicura
+## 🛠️ Technology Stack
 
-### Frontend
-- **React + TypeScript** - UI moderna e type-safe
-- **Vite** - Build tool veloce
-- **TailwindCSS** - Styling utility-first
-- **shadcn/ui** - Componenti UI eleganti
-- **React Query** - Gestione stato server
+### Backend Architecture
+- **FastAPI** - High-performance async Python web framework
+- **PostgreSQL** - Enterprise-grade relational database
+- **SQLAlchemy** - Advanced Python ORM with async support
+- **Alembic** - Database migration management
+- **Celery + Redis** - Distributed task queue for background processing
+- **OAuth2 + JWT** - Secure authentication and authorization
+- **Pydantic** - Data validation and serialization
 
-### Deployment
-- **Docker** - Containerizzazione completa
-- **Nginx** - Reverse proxy e servizio file statici
-- **Redis** - Cache e message broker
+### Frontend Stack
+- **React 18** - Modern component-based UI library
+- **TypeScript** - Type-safe JavaScript development
+- **Vite** - Lightning-fast build tool and dev server
+- **TailwindCSS** - Utility-first CSS framework
+- **shadcn/ui** - Beautiful, accessible component library
+- **React Query** - Powerful data synchronization for React
+- **React Router** - Declarative routing
 
-## 📁 Struttura Progetto
+### DevOps & Infrastructure
+- **Docker** - Containerized deployment with multi-stage builds
+- **Docker Compose** - Multi-container orchestration
+- **Nginx** - High-performance reverse proxy and static file server
+- **Redis** - In-memory data structure store for caching and message brokering
+- **GitHub Actions** - CI/CD pipeline automation
+
+## 📁 Project Architecture
 
 ```
-instadmin/
-├── backend/                 # API FastAPI
+instagram-manager/
+├── backend/                    # FastAPI Application
 │   ├── app/
-│   │   ├── api/            # Endpoint API
-│   │   ├── core/           # Configurazioni base
-│   │   ├── models/         # Modelli SQLAlchemy
-│   │   ├── schemas/        # Schemi Pydantic
-│   │   ├── workers/        # Task Celery
-│   │   └── services/       # Business logic
-│   ├── alembic/            # Migrazioni DB
-│   ├── Dockerfile          # Container backend
-│   └── requirements.txt    # Dipendenze Python
-├── frontend/               # App React
+│   │   ├── api/               # API Endpoints
+│   │   │   └── endpoints/     # Route handlers
+│   │   ├── core/              # Core configurations
+│   │   │   ├── config.py      # Settings management
+│   │   │   ├── database.py    # Database connection
+│   │   │   └── security.py    # Authentication logic
+│   │   ├── models/            # SQLAlchemy Models
+│   │   ├── schemas/           # Pydantic Schemas
+│   │   ├── services/          # Business Logic Layer
+│   │   └── workers/           # Celery Background Tasks
+│   ├── alembic/               # Database Migrations
+│   ├── tests/                 # Backend Test Suite
+│   ├── Dockerfile             # Backend Container
+│   └── requirements.txt       # Python Dependencies
+├── frontend/                   # React Application
 │   ├── src/
-│   │   ├── components/     # Componenti UI
-│   │   ├── contexts/       # Context React
-│   │   ├── pages/          # Pagine principali
-│   │   └── lib/            # Utility e API client
-│   ├── Dockerfile          # Container frontend
-│   └── package.json        # Dipendenze Node
-├── nginx/                  # Configurazione proxy
-│   └── nginx.conf          # Configurazione Nginx
-├── docker-compose.yml      # Orchestrazione servizi
-└── .env.example           # Template variabili ambiente
+│   │   ├── components/        # Reusable UI Components
+│   │   ├── contexts/          # React Context Providers
+│   │   ├── hooks/             # Custom React Hooks
+│   │   ├── lib/               # Utilities & API Client
+│   │   ├── pages/             # Application Pages
+│   │   └── types/             # TypeScript Definitions
+│   ├── public/                # Static Assets
+│   ├── tests/                 # Frontend Test Suite
+│   ├── Dockerfile             # Frontend Container
+│   └── package.json           # Node.js Dependencies
+├── nginx/                      # Reverse Proxy Configuration
+│   ├── nginx.conf             # Nginx Configuration
+│   └── ssl/                   # SSL Certificates
+├── docs/                       # Documentation
+├── scripts/                    # Deployment Scripts
+├── docker-compose.yml          # Service Orchestration
+├── docker-compose.prod.yml     # Production Configuration
+└── .env.example               # Environment Template
 ```
 
-## ⚡ Quick Start
+## 🚀 Quick Start
 
-### Prerequisiti
+### Prerequisites
 - Docker & Docker Compose
-- Account Meta Developer (per Instagram API)
+- Meta Developer Account (for Instagram API)
+- Node.js 18+ (for local development)
+- Python 3.11+ (for local development)
 
-### 1. Clona il Repository
+### 1. Clone Repository
 ```bash
-git clone <repository-url>
-cd instadmin
+git clone https://github.com/yourusername/instagram-manager.git
+cd instagram-manager
 ```
 
-### 2. Configura Ambiente
+### 2. Environment Setup
 ```bash
-# Copia e personalizza le variabili ambiente
+# Copy environment template
 cp .env.example .env
 
-# Modifica .env con le tue configurazioni:
-# - META_APP_ID e META_APP_SECRET
-# - DATABASE_URL e password sicure
-# - SECRET_KEY univoca per JWT
-# - ADMIN_EMAIL e ADMIN_PASSWORD
+# Configure your environment variables:
+# - META_APP_ID and META_APP_SECRET (from Meta Developer Console)
+# - DATABASE_URL and secure passwords
+# - SECRET_KEY for JWT (generate with: openssl rand -hex 32)
+# - ADMIN_EMAIL and ADMIN_PASSWORD
 ```
 
-### 3. Avvia i Servizi
+### 3. Launch Services
 ```bash
-# Build e avvio completo
+# Build and start all services
 docker-compose up -d
 
-# Verifica status
+# Check service status
 docker-compose ps
 
-# Visualizza logs
+# View logs
 docker-compose logs -f backend
 ```
 
-### 4. Accesso Dashboard
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:8000
-- **Documentazione API**: http://localhost:8000/docs
+### 4. Access Points
+- **Frontend Dashboard**: http://localhost:3000
+- **API Documentation**: http://localhost:8000/docs
+- **Backend API**: http://localhost:8080/api/v1
+- **Admin Panel**: http://localhost:3000/admin
 
-### 5. Login Admin
-- Email: admin@instadmin.com (o quello configurato)
-- Password: admin123 (CAMBIARE in produzione!)
+### 5. Default Admin Credentials
+- **Email**: admin@instadmin.com
+- **Password**: admin123
+- ⚠️ **Important**: Change these credentials in production!
 
-## 🔧 Configurazione
+### 6. Instagram API Setup
+1. Visit [Meta Developers](https://developers.facebook.com/)
+2. Create new app with "Instagram Basic Display" product
+3. Configure redirect URI: `https://yourdomain.com/api/v1/instagram/auth/callback`
+4. Copy App ID and App Secret to your `.env` file
 
-### Setup Account Meta Developer
+## ⚙️ Configuration
 
-1. Vai su [Meta Developers](https://developers.facebook.com/)
-2. Crea una nuova app con prodotto "Instagram Basic Display"
-3. Configura redirect URI: `https://tuodominio.com/auth/instagram/callback`
-4. Copia App ID e App Secret nel file `.env`
+### Meta Developer Account Setup
 
-### Variabili Ambiente Principali
+1. Navigate to [Meta Developers Console](https://developers.facebook.com/)
+2. Create a new application
+3. Add "Instagram Basic Display" product
+4. Configure OAuth redirect URI: `https://yourdomain.com/api/v1/instagram/auth/callback`
+5. Copy App ID and App Secret to your environment configuration
+6. Add test users for development
+7. Submit for app review when ready for production
+
+### Environment Variables
+
 ```env
-# Database PostgreSQL
-DATABASE_URL=postgresql://postgres:postgres_password@postgres:5432/instadmin
+# Database Configuration
+DATABASE_URL=postgresql://postgres:secure_password@postgres:5432/instagram_manager
+DATABASE_POOL_SIZE=20
+DATABASE_MAX_OVERFLOW=30
 
-# Meta Instagram API (OBBLIGATORIE)
-META_APP_ID=your_instagram_app_id
-META_APP_SECRET=your_instagram_app_secret
-META_REDIRECT_URI=https://yourdomain.com/auth/instagram/callback
+# Meta Instagram API (Required)
+META_APP_ID=your_meta_app_id
+META_APP_SECRET=your_meta_app_secret
+META_REDIRECT_URI=https://yourdomain.com/api/v1/instagram/auth/callback
+META_API_VERSION=v18.0
 
-# Sicurezza JWT
-SECRET_KEY=your_super_secret_jwt_key_256_bits_minimum
+# JWT Security
+SECRET_KEY=your_256_bit_secret_key_generate_with_openssl_rand_hex_32
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
+REFRESH_TOKEN_EXPIRE_DAYS=7
 
-# Admin iniziale
-ADMIN_EMAIL=admin@instadmin.com
-ADMIN_PASSWORD=your_secure_admin_password
-ADMIN_FULL_NAME=Administrator
+# Initial Admin User
+ADMIN_EMAIL=admin@yourdomain.com
+ADMIN_PASSWORD=secure_admin_password_change_in_production
+ADMIN_FULL_NAME=System Administrator
 
-# Redis/Celery per task queue
+# Redis & Celery Configuration
 REDIS_URL=redis://:redis_password@redis:6379/0
 CELERY_BROKER_URL=redis://:redis_password@redis:6379/1
 CELERY_RESULT_BACKEND=redis://:redis_password@redis:6379/2
+CELERY_TASK_SERIALIZER=json
+CELERY_RESULT_SERIALIZER=json
 
-# Media storage
-MEDIA_UPLOAD_PATH=/app/media
-MAX_UPLOAD_SIZE=10485760  # 10MB
-ALLOWED_FILE_TYPES=jpg,jpeg,png,gif,mp4,mov
+# Media Storage
+MEDIA_STORAGE_PATH=/app/media
+PUBLIC_MEDIA_BASE_URL=https://yourdomain.com/media
+MAX_FILE_SIZE=52428800  # 50MB
+ALLOWED_FILE_TYPES=jpg,jpeg,png,webp,gif,mp4,mov,avi
+IMAGE_QUALITY=85
+THUMBNAIL_SIZE=300
 
-# Rate limiting
+# Rate Limiting & Security
 RATE_LIMIT_PER_MINUTE=60
-RATE_LIMIT_INSTAGRAM_API=200
+RATE_LIMIT_LOGIN_ATTEMPTS=5
+INSTAGRAM_API_RATE_LIMIT=200
+CORS_ORIGINS=["https://yourdomain.com", "http://localhost:3000"]
+ALLOWED_HOSTS=["yourdomain.com", "localhost"]
 
-# CORS
-FRONTEND_URL=http://localhost:3000
-CORS_ORIGINS=["http://localhost:3000", "https://yourdomain.com"]
-
-# Logging
+# Application Settings
+ENVIRONMENT=production
+DEBUG=false
 LOG_LEVEL=INFO
-LOG_FORMAT=%(asctime)s - %(name)s - %(levelname)s - %(message)s
+TIMEZONE=UTC
+
+# Monitoring & Analytics
+SENTRY_DSN=your_sentry_dsn_for_error_tracking
+GOOGLE_ANALYTICS_ID=your_ga_tracking_id
 ```
 
-## 🚀 Deploy Produzione
+## 🚀 Production Deployment
 
-### 1. Setup SSL/TLS
+### Docker Compose Production
+
 ```bash
-# Crea directory certificati
+# Use production configuration
+docker-compose -f docker-compose.prod.yml up -d
+
+# Scale services as needed
+docker-compose -f docker-compose.prod.yml up -d --scale celery-worker=3
+```
+
+### SSL/TLS Setup
+
+```bash
+# Create SSL directory
 mkdir -p nginx/ssl
 
-# Opzione A: Let's Encrypt (raccomandato)
+# Option A: Let's Encrypt (Recommended)
 certbot certonly --webroot -w /var/www/certbot -d yourdomain.com
 
-# Opzione B: Certificati custom
-# Copia i tuoi certificati in:
-# nginx/ssl/cert.pem
-# nginx/ssl/key.pem
+# Option B: Custom certificates
+# Place your certificates in nginx/ssl/
+# - fullchain.pem
+# - privkey.pem
 ```
 
-### 2. Configurazione Sicurezza
-```bash
-# Crea .env per produzione
-cp .env.example .env.prod
+### Environment Security Checklist
 
-# IMPORTANTE: Modifica TUTTE le password di default
-# - Genera SECRET_KEY sicura: openssl rand -hex 32
-# - Password PostgreSQL e Redis uniche
-# - Admin password robusta
-# - Configura domini corretti per CORS
+- [ ] Change default admin credentials
+- [ ] Generate secure SECRET_KEY (256-bit)
+- [ ] Use strong database passwords
+- [ ] Configure proper CORS origins
+- [ ] Set up SSL/TLS certificates
+- [ ] Enable firewall rules
+- [ ] Configure backup strategy
+- [ ] Set up monitoring and logging
+
+### Performance Optimization
+
+```bash
+# Database optimization
+# Add to docker-compose.prod.yml
+postgres:
+  command: |
+    postgres
+    -c shared_preload_libraries=pg_stat_statements
+    -c max_connections=200
+    -c shared_buffers=256MB
+    -c effective_cache_size=1GB
+
+# Redis optimization
+redis:
+  command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru
+```
+### Database Backup & Recovery
+
+```bash
+# Automated daily backup
+docker-compose exec postgres pg_dump -U postgres instagram_manager > backup_$(date +%F).sql
+
+# Restore from backup
+docker-compose exec -T postgres psql -U postgres instagram_manager < backup_2024-01-15.sql
+
+# Backup with compression
+docker-compose exec postgres pg_dump -U postgres instagram_manager | gzip > backup_$(date +%F).sql.gz
 ```
 
-### 3. Deploy
-```bash
-# Usa file env produzione
-docker-compose --env-file .env.prod up -d
+### Monitoring & Health Checks
 
-# Verifica servizi attivi
+```bash
+# Check service health
 docker-compose ps
+docker-compose logs --tail=50 backend
 
-# Monitora logs
-docker-compose logs -f
+# Monitor resource usage
+docker stats
+
+# Database performance
+docker-compose exec postgres psql -U postgres -c "SELECT * FROM pg_stat_activity;"
+```
+## 📊 API Documentation
+
+### API Endpoints Overview
+
+- **Base URL (Development)**: http://localhost:8000/api/v1
+- **Base URL (Production)**: https://yourdomain.com/api/v1
+- **Interactive Documentation**: http://localhost:8000/docs
+- **OpenAPI Schema**: http://localhost:8000/openapi.json
+
+### Authentication Flow
+
+```bash
+# Admin login
+curl -X POST "https://yourdomain.com/api/v1/auth/login" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "username=admin@yourdomain.com&password=secure_password"
+
+# Response
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "bearer",
+  "expires_in": 1800
+}
+
+# Use token in subsequent requests
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  https://yourdomain.com/api/v1/admin/me
 ```
 
-### 4. Configurazione Server
+### Core API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|--------------|
+| `/auth/login` | POST | Admin authentication |
+| `/admin/me` | GET | Current admin profile |
+| `/instagram/accounts` | GET | List connected accounts |
+| `/instagram/auth/url` | GET | Get OAuth authorization URL |
+| `/posts` | GET/POST | Manage Instagram posts |
+| `/scheduled` | GET/POST | Manage scheduled posts |
+| `/media/upload` | POST | Upload media files |
+| `/dashboard/stats` | GET | Dashboard statistics |
+| `/analytics` | GET | Account analytics |
+
+### Instagram Integration Examples
+
 ```bash
-# Firewall - apri solo porte necessarie
-ufw allow 22    # SSH
-ufw allow 80    # HTTP
-ufw allow 443   # HTTPS
-ufw enable
+# Get Instagram OAuth URL
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  https://yourdomain.com/api/v1/instagram/auth/url
 
-# Configura backup automatico
-crontab -e
-# Aggiungi: 0 2 * * * /path/to/backup-script.sh
-```
+# List connected accounts
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  https://yourdomain.com/api/v1/instagram/accounts
 
-### Backup & Manutenzione
-```bash
-# Script backup database
-#!/bin/bash
-DATE=$(date +%Y%m%d_%H%M%S)
-docker-compose exec -T postgres pg_dump -U postgres instadmin > "backup_${DATE}.sql"
-gzip "backup_${DATE}.sql"
+# Get account details
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  https://yourdomain.com/api/v1/instagram/accounts/1
 
-# Backup volumi Docker
-docker run --rm -v instadmin_postgres_data:/data -v $(pwd):/backup \
-  ubuntu tar czf /backup/postgres_data_${DATE}.tar.gz /data
+# Sync account data
+curl -X POST -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  https://yourdomain.com/api/v1/instagram/accounts/1/sync
 
-# Rotazione logs
-docker-compose exec backend find /app/logs -name "*.log" -mtime +30 -delete
+# Upload media
+curl -X POST -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -F "file=@image.jpg" \
+  -F "alt_text=Beautiful sunset" \
+  https://yourdomain.com/api/v1/media/upload
 
-# Aggiornamento servizi
-docker-compose pull
-docker-compose up -d --force-recreate
+# Schedule a post
+curl -X POST -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "account_id": 1,
+    "caption": "Check out this amazing content!",
+    "media_files": ["media/image.jpg"],
+    "scheduled_for": "2024-12-25T10:00:00Z"
+  }' \
+  https://yourdomain.com/api/v1/scheduled
 
-# Pulizia immagini vecchie
-docker image prune -f
-```
-
-## 🔑 Funzionalità Principali
-
-### 1. Gestione Account Instagram
-- **Connessione OAuth2**: Flow sicuro per autorizzazione account
-- **Sincronizzazione automatica**: Profile info, follower count, media count
-- **Refresh token**: Rinnovo automatico autorizzazioni Instagram  
-- **Multi-account**: Gestione illimitata account da singola dashboard
-- **Permessi granulari**: Controllo accessi per ogni account
-
-### 2. Programmazione Contenuti  
-- **Editor avanzato**: Preview in tempo reale per tutti i formati
-- **Scheduling flessibile**: Data/ora specifica o ricorrente
-- **Multi-formato**: Support completo per Feed, Stories, Reels
-- **Retry automatico**: Sistema intelligente per riprovare pubblicazioni fallite
-- **Calendario visuale**: Vista mensile con drag & drop
-- **Bulk operations**: Programmazione multipla simultanea
-
-### 3. Gestione Media
-- **Upload sicuro**: Validazione formato e dimensione
-- **Organizzazione**: Tag, categorie, ricerca avanzata  
-- **Ottimizzazione**: Resize automatico per Instagram
-- **Anteprima**: Preview immediato per tutti i formati
-- **Storage scalabile**: Supporto cloud storage (AWS S3, etc.)
-
-### 4. Analytics & Insights
-- **Metriche real-time**: Like, commenti, reach, impressioni
-- **Grafici interattivi**: Trend temporali e confronti
-- **Report personalizzati**: Export PDF/Excel con KPI
-- **Analisi hashtag**: Performance e suggerimenti
-- **Competitor analysis**: Benchmark con account simili
-- **ROI tracking**: Conversioni e engagement rate
-
-### 5. Automazione Avanzata
-- **Celery workers**: Task distribuiti per performance
-- **Coda prioritaria**: Gestione intelligente pubblicazioni
-- **Retry logic**: Sistema resiliente per errori temporanei
-- **Monitoring**: Health check e alerting automatico
-- **Maintenance**: Pulizia automatica dati obsoleti
-
-## 🛡️ Sicurezza
-
-### Misure Implementate
-- **Autenticazione JWT**: Token sicuri con refresh automatico
-- **Rate limiting**: Protezione DDoS e abuso API  
-- **CORS policy**: Controllo rigoroso domini autorizzati
-- **Input validation**: Sanitizzazione completa dati utente
-- **SQL injection**: Protezione via ORM parametrizzato
-- **XSS protection**: Headers sicurezza e CSP policy
-- **HTTPS enforcement**: Redirect automatico HTTP->HTTPS
-- **Secrets management**: Variabili ambiente crittografate
-
-### Checklist Sicurezza Produzione
-```bash
-# 1. Password e chiavi
-□ SECRET_KEY generata casualmente (min 256 bit)
-□ Password database e Redis uniche e robuste  
-□ Admin password diversa da default
-□ Certificati SSL validi e aggiornati
-
-# 2. Configurazione
-□ DEBUG=false in produzione
-□ CORS limitato a domini autorizzati
-□ Rate limiting attivo
-□ Logging completo abilitato
-
-# 3. Infrastruttura  
-□ Firewall configurato (solo 80, 443, 22)
-□ Backup automatici attivi
-□ Monitoring e alerting configurato
-□ Updates automatici di sicurezza
-
-# 4. Applicazione
-□ Dipendenze aggiornate
-□ Vulnerabilità scannate
-□ Access logs monitorati
-□ Database accesso limitato
+# Dashboard statistics
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  https://yourdomain.com/api/v1/dashboard/stats
 ```
 
 ## 📚 API Documentation
@@ -325,10 +391,10 @@ docker image prune -f
 
 #### Autenticazione
 ```bash
-# Login admin
-curl -X POST "http://localhost:8000/auth/login" \
-  -H "Content-Type: application/json" \
-  -d '{"email": "admin@instladmin.com", "password": "admin123"}'
+# Login admin (OAuth2PasswordRequestForm)
+curl -X POST "http://localhost:8000/api/v1/auth/login" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "username=admin@instadmin.com&password=admin123"
 
 # Response: {"access_token": "eyJ...", "token_type": "bearer"}
 ```
@@ -336,68 +402,178 @@ curl -X POST "http://localhost:8000/auth/login" \
 #### Instagram Account Management  
 ```bash
 # Ottieni URL autorizzazione Instagram
-curl -X GET "http://localhost:8000/instagram/auth-url" \
+curl -X GET "http://localhost:8000/api/v1/instagram/auth/url" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 
 # Callback dopo autorizzazione
-curl -X POST "http://localhost:8000/instagram/callback" \
+curl -X POST "http://localhost:8000/api/v1/instagram/auth/callback" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"code": "INSTAGRAM_AUTH_CODE", "state": "STATE_VALUE"}'
 
 # Lista account connessi
-curl -X GET "http://localhost:8000/instagram/accounts" \
+curl -X GET "http://localhost:8000/api/v1/instagram/accounts" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
 #### Post Management
 ```bash
 # Crea nuovo post
-curl -X POST "http://localhost:8000/posts/" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "account_id": 1,
-    "post_type": "feed", 
-    "content": "Il mio primo post!",
-    "media_files": ["image1.jpg"],
-    "hashtags": ["test", "instladmin"]
-  }'
-
-# Programma post
-curl -X POST "http://localhost:8000/scheduled/" \
+curl -X POST "http://localhost:8000/api/v1/posts" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "account_id": 1,
     "post_type": "feed",
-    "content": "Post programmato!",
+    "caption": "Il mio primo post!",
+    "media_files": [1]
+  }'
+
+# Programma post
+curl -X POST "http://localhost:8000/api/v1/scheduled" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "account_id": 1,
+    "post_type": "feed",
+    "caption": "Post programmato!",
     "media_files": ["image1.jpg"],
-    "scheduled_time": "2024-12-25T10:00:00Z"
+    "scheduled_for": "2025-12-25T10:00:00Z"
   }'
 ```
 
 #### Analytics
 ```bash
 # Analytics account
-curl -X GET "http://localhost:8000/analytics/account/1" \
+curl -X GET "http://localhost:8000/api/v1/analytics/account/1" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 
 # Analytics post specifico  
-curl -X GET "http://localhost:8000/analytics/post/123" \
+curl -X GET "http://localhost:8000/api/v1/analytics/post/123" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 
-# Dashboard stats
-curl -X GET "http://localhost:8000/dashboard/stats" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+# Dashboard statistics
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  https://yourdomain.com/api/v1/dashboard/stats
 ```
 
-### Rate Limits
-- **API generale**: 60 richieste/minuto per IP
-- **Login endpoint**: 5 tentativi/minuto per IP
-- **Instagram API**: 200 richieste/ora (limite Meta)
+## 🧪 Testing & Quality Assurance
 
-## 🧪 Testing & Development
+### Health Check & Smoke Tests
+
+```bash
+# System health check
+curl http://localhost:8000/health
+# Expected: {"status":"healthy","environment":"production"}
+
+# Authentication test
+ACCESS_TOKEN=$(curl -sS -X POST "http://localhost:8000/api/v1/auth/login" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "username=admin@instadmin.com&password=admin123" | \
+  jq -r .access_token)
+
+# Verify admin profile
+curl -sS -H "Authorization: Bearer $ACCESS_TOKEN" \
+  http://localhost:8000/api/v1/admin/me
+
+# Test Instagram OAuth URL generation
+curl -sS -H "Authorization: Bearer $ACCESS_TOKEN" \
+  http://localhost:8000/api/v1/instagram/auth/url
+
+# Dashboard statistics
+curl -sS -H "Authorization: Bearer $ACCESS_TOKEN" \
+  https://yourdomain.com/api/v1/dashboard/stats
+```
+
+### Automated Testing
+
+```bash
+# Backend tests
+cd backend
+python -m pytest tests/ -v --cov=app
+
+# Frontend tests
+cd frontend
+npm test
+npm run test:e2e
+
+# Integration tests
+docker-compose -f docker-compose.test.yml up --abort-on-container-exit
+```
+
+### Performance Testing
+
+```bash
+# Load testing with Apache Bench
+ab -n 1000 -c 10 https://yourdomain.com/api/v1/health
+
+# Database performance
+docker-compose exec postgres psql -U postgres -c "EXPLAIN ANALYZE SELECT * FROM posts LIMIT 100;"
+```
+
+### Rate Limits & Security
+
+- **General API**: 60 requests/minute per IP
+- **Login endpoint**: 5 attempts/minute per IP  
+- **Instagram API**: 200 requests/hour (Meta limit)
+- **Media upload**: 10 files/minute per user
+- **Account sync**: 1 request/5 minutes per account
+
+## 🔧 Development & Database Management
+
+### Database Migrations with Alembic
+
+```bash
+# Create database backup (recommended)
+docker-compose exec -T postgres pg_dump -U postgres instagram_manager > backup_$(date +%F_%H%M%S).sql
+
+# Rebuild containers with latest changes
+docker-compose build --no-cache backend celery-worker celery-beat
+docker-compose up -d
+
+# Generate new migration based on model changes
+docker-compose exec backend alembic revision --autogenerate -m "Add new features"
+
+# Apply migrations
+docker-compose exec backend alembic upgrade head
+
+# Check migration history
+docker-compose exec backend alembic history --verbose
+
+# Rollback to previous migration (if needed)
+docker-compose exec backend alembic downgrade -1
+```
+
+### Database Schema
+
+The application uses a well-structured PostgreSQL schema with the following key tables:
+
+- **`admins`**: System administrators with role-based access
+- **`instagram_accounts`**: Connected Instagram accounts with OAuth tokens
+- **`posts`**: Published Instagram posts with engagement metrics
+- **`scheduled_posts`**: Queued posts for future publishing
+- **`media`**: Uploaded media files with metadata
+- **`analytics`**: Performance metrics and insights data
+
+### Local Development Setup
+
+```bash
+# Backend development
+cd backend
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# Frontend development
+cd frontend
+npm install
+npm run dev
+
+# Database setup (local)
+psql -U postgres -c "CREATE DATABASE instagram_manager;"
+alembic upgrade head
+```
 
 ### Setup Ambiente Sviluppo
 
@@ -533,53 +709,6 @@ docker-compose -f docker-compose.yml -f docker-compose.override.yml up -d
 3. **Crea Feature Branch**
 ```bash
 git checkout -b feature/amazing-feature
-```
-
-4. **Coding Standards**
-   - **Backend**: Segui PEP 8, usa black per formatting
-   - **Frontend**: ESLint + Prettier configurati  
-   - **Commit**: Conventional Commits format
-   - **Tests**: Coverage minima 80%
-
-5. **Pull Request**
-   - Descrizione dettagliata delle modifiche
-   - Screenshot per UI changes
-   - Test copertura completa
-   - Documentazione aggiornata
-
-### Roadmap Sviluppo
-
-#### v2.0 - Prossimi Features
-- [ ] **Multi-tenant**: Supporto più organizzazioni
-- [ ] **Advanced scheduling**: Timezone e ricorrenza  
-- [ ] **AI content**: Suggerimenti automatici hashtag
-- [ ] **Team collaboration**: Workflow approvazione post
-- [ ] **White label**: Personalizzazione brand
-- [ ] **Mobile app**: App nativa iOS/Android
-- [ ] **Integrations**: Zapier, IFTTT connectors
-
-#### v2.1 - Analytics Avanzate
-- [ ] **A/B testing**: Test automatici post variants
-- [ ] **Predictive analytics**: ML per optimal posting times
-- [ ] **Competitor tracking**: Monitoraggio automatico
-- [ ] **ROI calculator**: Tracking conversioni e revenue
-- [ ] **Custom reports**: Report builder drag & drop
-
-## 📄 Licenza
-
-Distribuito sotto licenza MIT. Vedi `LICENSE` per maggiori informazioni.
-
-## 🆘 Supporto
-
-### Risoluzione Problemi
-
-#### Problemi Comuni
-
-**1. Instagram API non funziona**
-```bash
-# Verifica configurazione Meta App
-echo $META_APP_ID $META_APP_SECRET
-
 # Check callback URL
 # Deve matchare esattamente quello in Meta Developer Console
 

@@ -208,14 +208,15 @@ async def get_account_stats(
     
     # Calcola engagement rate (approssimativo)
     total_posts = len(account.posts)
-    total_engagement = sum(post.likes_count + post.comments_count for post in account.posts)
-    engagement_rate = (total_engagement / (account.followers_count * total_posts)) * 100 if account.followers_count > 0 and total_posts > 0 else 0.0
+    total_engagement = sum((post.like_count or 0) + (post.comment_count or 0) for post in account.posts)
+    engagement_denominator = (account.followers_count or 0) * total_posts
+    engagement_rate = (total_engagement / engagement_denominator) * 100 if engagement_denominator > 0 else 0.0
     
     # Ultimo post
     last_post_date = None
     if account.posts:
         last_post = max(account.posts, key=lambda p: p.created_at)
-        last_post_date = last_post.published_at or last_post.created_at
+        last_post_date = last_post.timestamp or last_post.created_at
     
     return InstagramAccountStats(
         account_id=account.id,

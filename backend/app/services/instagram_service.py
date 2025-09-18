@@ -3,6 +3,7 @@ import json
 from typing import Dict, List, Optional, Any
 from urllib.parse import urlencode
 from datetime import datetime, timedelta
+import asyncio
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -170,6 +171,27 @@ class InstagramService:
         # Se carousel, crea container
         return await self.create_carousel_post(access_token, media_ids, caption, location_id)
     
+    def create_post_sync(
+        self,
+        access_token: str,
+        media_urls: List[str],
+        caption: Optional[str] = None,
+        location_id: Optional[str] = None
+    ) -> str:
+        """Wrapper sincrono per create_post da usare nei worker Celery."""
+        try:
+            # Prova con asyncio.run se non c'è un loop attivo
+            return asyncio.run(self.create_post(access_token, media_urls, caption, location_id))
+        except RuntimeError:
+            # Se un event loop è già in esecuzione, usa un loop dedicato
+            loop = asyncio.new_event_loop()
+            try:
+                asyncio.set_event_loop(loop)
+                return loop.run_until_complete(self.create_post(access_token, media_urls, caption, location_id))
+            finally:
+                asyncio.set_event_loop(None)
+                loop.close()
+    
     async def create_carousel_post(
         self,
         access_token: str,
@@ -203,6 +225,38 @@ class InstagramService:
             
             # Pubblica carousel
             return await self.publish_media(access_token, container_id)
+
+    def get_media_insights_sync(self, access_token: str, media_id: str) -> Dict[str, Any]:
+        """Wrapper sincrono per get_media_insights."""
+        try:
+            return asyncio.run(self.get_media_insights(access_token, media_id))
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            try:
+                asyncio.set_event_loop(loop)
+                return loop.run_until_complete(self.get_media_insights(access_token, media_id))
+            finally:
+                asyncio.set_event_loop(None)
+                loop.close()
+
+    def get_account_insights_sync(
+        self,
+        access_token: str,
+        period: str = "day",
+        since: datetime = None,
+        until: datetime = None
+    ) -> Dict[str, Any]:
+        """Wrapper sincrono per get_account_insights."""
+        try:
+            return asyncio.run(self.get_account_insights(access_token, period, since, until))
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            try:
+                asyncio.set_event_loop(loop)
+                return loop.run_until_complete(self.get_account_insights(access_token, period, since, until))
+            finally:
+                asyncio.set_event_loop(None)
+                loop.close()
     
     async def get_media_insights(self, access_token: str, media_id: str) -> Dict[str, Any]:
         """Ottieni insights per media"""

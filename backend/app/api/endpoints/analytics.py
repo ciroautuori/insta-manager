@@ -182,9 +182,9 @@ async def get_account_insights(
         if post_type not in engagement_by_type:
             engagement_by_type[post_type] = {"total_engagement": 0, "total_reach": 0, "count": 0}
         
-        engagement = post.likes_count + post.comments_count
+        engagement = (post.like_count or 0) + (post.comment_count or 0)
         engagement_by_type[post_type]["total_engagement"] += engagement
-        engagement_by_type[post_type]["total_reach"] += post.reach
+        engagement_by_type[post_type]["total_reach"] += (post.reach or 0)
         engagement_by_type[post_type]["count"] += 1
     
     # Calcola rate per tipo

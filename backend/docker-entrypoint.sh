@@ -24,10 +24,15 @@ while ! redis-cli -h redis -p 6379 -a redis_password ping; do
 done
 log "Redis pronto!"
 
-# Esegui migrazioni database
-log "Esecuzione migrazioni Alembic..."
+# Crea tabelle database direttamente
+log "Creazione tabelle database..."
 cd /app
-alembic upgrade head
+python -c "
+from app.core.database import engine
+from app.models import Base
+Base.metadata.create_all(bind=engine)
+print('Tabelle create con successo')
+"
 
 # Crea admin utente se non esiste
 log "Creazione admin utente..."

@@ -29,14 +29,14 @@ async def get_dashboard_stats(
     total_followers = db.query(func.sum(InstagramAccount.followers_count)).scalar() or 0
     
     # Totale post
-    total_posts = db.query(Post).filter(Post.status == PostStatus.PUBLISHED).count()
+    total_posts = db.query(Post).filter(Post.status == "published").count()
     
-    # Post programmati
-    scheduled_posts = 0  # Temporaneamente disabilitato per problemi con enum
+    # Post programmati (pending)
+    scheduled_posts = db.query(ScheduledPost).filter(ScheduledPost.status == ScheduleStatus.PENDING).count()
 
     # Calcola engagement rate medio
     posts_with_metrics = db.query(Post).filter(
-        Post.status == PostStatus.PUBLISHED,
+        Post.status == "published",
         Post.reach > 0
     ).all()
     
@@ -49,7 +49,7 @@ async def get_dashboard_stats(
     accounts = db.query(InstagramAccount).filter(InstagramAccount.is_active == True).all()
     
     for account in accounts:
-        account_posts = [p for p in account.posts if p.status == PostStatus.PUBLISHED and p.reach > 0]
+        account_posts = [p for p in account.posts if p.status == "published" and p.reach > 0]
         account_engagement = sum(p.like_count + p.comment_count for p in account_posts)
         account_reach = sum(p.reach for p in account_posts)
         account_rate = (account_engagement / account_reach) * 100 if account_reach > 0 else 0.0
@@ -85,12 +85,17 @@ async def get_recent_activity(
     
     # Post pubblicati di recente
     recent_posts = db.query(Post).filter(
-        Post.status == PostStatus.PUBLISHED,
+        Post.status == "published",
         Post.timestamp.isnot(None)
     ).order_by(Post.timestamp.desc()).limit(limit).all()
     
-    # Post programmati prossimi - temporaneamente disabilitato
-    upcoming_scheduled = []  # Temporaneamente disabilitato per problemi con enum
+    # Post programmati prossimi (entro i prossimi 7 giorni)
+    now = datetime.utcnow()
+    upcoming_scheduled = db.query(ScheduledPost).filter(
+        ScheduledPost.status == ScheduleStatus.PENDING,
+        ScheduledPost.scheduled_for >= now,
+        ScheduledPost.scheduled_for <= now + timedelta(days=7)
+    ).order_by(ScheduledPost.scheduled_for.asc()).limit(10).all()
     
     # Account connessi di recente
     recent_accounts = db.query(InstagramAccount).order_by(
@@ -145,7 +150,7 @@ async def get_performance_metrics(
     # Posts nel periodo
     period_posts = db.query(Post).filter(
         Post.timestamp >= start_date,
-        Post.status == PostStatus.PUBLISHED
+        Post.status == "published"
     ).all()
     
     # Metriche aggregate
@@ -192,7 +197,7 @@ async def get_content_insights(
     """Ottieni insights contenuti"""
     
     # Analizza tutti i post pubblicati
-    published_posts = db.query(Post).filter(Post.status == PostStatus.PUBLISHED).all()
+    published_posts = db.query(Post).filter(Post.status == "published").all()
     
     # Performance per tipo di post
     post_type_performance = {}
@@ -207,9 +212,9 @@ async def get_content_insights(
             }
         
         post_type_performance[post_type]["count"] += 1
-        post_type_performance[post_type]["total_likes"] += post.like_count
-        post_type_performance[post_type]["total_comments"] += post.comment_count
-        post_type_performance[post_type]["total_reach"] += post.reach
+        post_type_performance[post_type]["total_likes"] += (post.like_count or 0)
+        post_type_performance[post_type]["total_comments"] += (post.comment_count or 0)
+        post_type_performance[post_type]["total_reach"] += (post.reach or 0)
     
     # Calcola medie per tipo
     for post_type, stats in post_type_performance.items():
@@ -223,13 +228,14 @@ async def get_content_insights(
     # Top hashtags (analisi semplificata)
     hashtag_usage = {}
     for post in published_posts:
-        if post.hashtags:
-            for hashtag in post.hashtags:
+        # Il modello Post non espone hashtags; questa sezione è opzionale
+        if hasattr(post, 'hashtags') and getattr(post, 'hashtags'):
+            for hashtag in getattr(post, 'hashtags'):
                 if hashtag not in hashtag_usage:
                     hashtag_usage[hashtag] = {"count": 0, "total_engagement": 0}
                 
                 hashtag_usage[hashtag]["count"] += 1
-                hashtag_usage[hashtag]["total_engagement"] += post.like_count + post.comment_count
+                hashtag_usage[hashtag]["total_engagement"] += (post.like_count or 0) + (post.comment_count or 0)
     
     # Top 10 hashtags per utilizzo
     top_hashtags = sorted(

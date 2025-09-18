@@ -2,6 +2,7 @@ from celery import current_app
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from datetime import datetime
+import os
 import traceback
 from loguru import logger
 
@@ -50,10 +51,14 @@ def publish_scheduled_post(self, scheduled_post_id: int):
         # Prepara media URLs se presenti
         media_urls = []
         if scheduled.media_files:
+            base = settings.PUBLIC_MEDIA_BASE_URL.rstrip('/')
             for media_path in scheduled.media_files:
-                # Genera URL completo per il media
-                media_url = f"https://yourdomain.com/media/{media_path}"
-                media_urls.append(media_url)
+                # Usa solo il nome file per comporre l'URL pubblico
+                try:
+                    filename = os.path.basename(str(media_path))
+                except Exception:
+                    filename = str(media_path)
+                media_urls.append(f"{base}/{filename}")
         
         # Pubblica su Instagram
         instagram_post_id = None
@@ -69,17 +74,14 @@ def publish_scheduled_post(self, scheduled_post_id: int):
             # Se non ci sono media, non si può pubblicare
             raise Exception("Post deve contenere almeno un media")
         
-        # Crea record post pubblicato
+        # Crea record post pubblicato (campi aderenti al modello)
         new_post = Post(
             account_id=scheduled.account_id,
             instagram_post_id=instagram_post_id,
             caption=scheduled.caption,
-            hashtags=scheduled.hashtags,
             post_type=PostType(scheduled.post_type),
             status=PostStatus.PUBLISHED,
-            published_at=datetime.utcnow(),
-            location_id=scheduled.location_id,
-            location_name=scheduled.location_name
+            timestamp=datetime.utcnow(),
         )
         
         db.add(new_post)
@@ -147,15 +149,16 @@ def cancel_scheduled_task(task_id: str):
         logger.error(f"Errore cancellazione task {task_id}: {str(e)}")
         return {"status": "error", "message": str(e)}
 
-@celery_app.task(bind=True, name="bulk_publish_posts")
-def bulk_publish_posts(self, scheduled_post_ids: list):
+@celery_app.task(name="bulk_publish_posts")
+def bulk_publish_posts(scheduled_post_ids: list):
     """Pubblica multipli post in batch"""
     results = []
     
     for post_id in scheduled_post_ids:
         try:
-            result = publish_scheduled_post(post_id)
-            results.append({"post_id": post_id, "result": result})
+            async_result = publish_scheduled_post.apply_async(args=[post_id])
+            result_value = async_result.get(timeout=60)  # attende fino a 60s per singolo post
+            results.append({"post_id": post_id, "result": result_value, "task_id": async_result.id})
         except Exception as e:
             results.append({"post_id": post_id, "error": str(e)})
     
@@ -184,8 +187,9 @@ def republish_failed_post(scheduled_post_id: int):
         
         db.commit()
         
-        # Ripubblica immediatamente
-        return publish_scheduled_post(scheduled_post_id)
+        # Ripubblica immediatamente tramite Celery
+        task = publish_scheduled_post.apply_async(args=[scheduled_post_id])
+        return {"status": "queued", "task_id": task.id}
         
     except Exception as e:
         db.rollback()

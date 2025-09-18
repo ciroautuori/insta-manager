@@ -194,11 +194,11 @@ def sync_post_analytics(self, post_id: int):
                 elif metric_name == 'reach':
                     post.reach = metric_value
                 elif metric_name == 'likes':
-                    post.likes_count = metric_value
+                    post.like_count = metric_value
                 elif metric_name == 'comments':
-                    post.comments_count = metric_value
+                    post.comment_count = metric_value
                 elif metric_name == 'shares':
-                    post.shares_count = metric_value
+                    post.share_count = metric_value
                 elif metric_name == 'saved':
                     post.saves_count = metric_value if hasattr(post, 'saves_count') else 0
         
@@ -226,7 +226,7 @@ def batch_sync_post_analytics(account_id: int = None, days_back: int = 7):
         cutoff_date = datetime.utcnow() - timedelta(days=days_back)
         query = db.query(Post).filter(
             Post.status == PostStatus.PUBLISHED,
-            Post.published_at >= cutoff_date,
+            Post.timestamp >= cutoff_date,
             Post.instagram_post_id.isnot(None)
         )
         
@@ -299,11 +299,11 @@ def generate_analytics_report(account_id: int, period_days: int = 30):
         posts = db.query(Post).filter(
             Post.account_id == account_id,
             Post.status == PostStatus.PUBLISHED,
-            Post.published_at >= datetime.combine(start_date, datetime.min.time())
+            Post.timestamp >= datetime.combine(start_date, datetime.min.time())
         ).all()
         
-        total_likes = sum(p.likes_count for p in posts)
-        total_comments = sum(p.comments_count for p in posts)
+        total_likes = sum((p.like_count or 0) for p in posts)
+        total_comments = sum((p.comment_count or 0) for p in posts)
         avg_engagement_rate = ((total_likes + total_comments) / total_reach * 100) if total_reach > 0 else 0
         
         report = {
